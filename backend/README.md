@@ -1,3 +1,13 @@
+---
+title: DeepTrace Backend API
+emoji: 🛡️
+colorFrom: red
+colorTo: blue
+sdk: docker
+app_port: 7860
+pinned: false
+---
+
 # DeepTrace — Python FastAPI Backend
 
 Asynchronous REST backend for DeepTrace deepfake image and video classification, utilizing PyTorch, EfficientNet-B0 architectures, and OpenCV Haar Cascade face detection.
@@ -126,7 +136,30 @@ Interactive API documentation:
 
 ---
 
-## ☁️ Render Deployment Configuration
+## ☁️ Hugging Face Spaces Deployment (Docker)
+
+Hugging Face Spaces is the recommended cloud platform for DeepTrace backend deployment because it provides free compute (2 vCPU, 16GB RAM) and native Git LFS support for PyTorch model checkpoints.
+
+### Automatic Deployment via CLI Helper:
+1. Create a new Space on [Hugging Face](https://huggingface.co/new-space):
+   - **SDK**: Select **Docker** (Blank)
+   - **License**: MIT
+   - **Hardware**: CPU Basic (Free) or GPU
+2. Generate an Access Token with **Write** permissions: [Hugging Face Tokens](https://huggingface.co/settings/tokens)
+3. Deploy in one command:
+```bash
+python deploy_hf.py --space-repo YOUR_USERNAME/deeptrace-backend --token YOUR_HF_TOKEN
+```
+The script will package the application, track `.pth` files with Git LFS, and push to your Space.
+
+Once built, access your API at:
+```
+https://YOUR_USERNAME-deeptrace-backend.hf.space
+```
+
+---
+
+## ☁️ Render Deployment Configuration (Alternative)
 
 When creating a Web Service on [Render](https://render.com):
 

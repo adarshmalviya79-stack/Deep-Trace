@@ -301,35 +301,72 @@ DEVICE=auto
 
 ---
 
-## ☁️ Deployment Guide (Vercel & Render)
+## ☁️ Deployment Guide (Hugging Face Spaces & Vercel)
 
-### Deploying the Backend to Render
+### 1. Deploying the Backend to Hugging Face Spaces (Docker)
 
+Hugging Face Spaces provides free hosting with Git LFS support for PyTorch model checkpoints (`.pth`).
+
+#### Step A: Create a New Space
+1. Log in to [Hugging Face](https://huggingface.co).
+2. Go to **[New Space](https://huggingface.co/new-space)**.
+3. Settings:
+   - **Space name**: `deeptrace-backend` (or your preferred name)
+   - **License**: `mit` or `apache-2.0`
+   - **Space SDK**: Select **Docker** (Blank)
+   - **Space hardware**: `CPU Basic · 2 vCPU · 16 GB · Free` (or GPU tier for faster inference)
+   - **Visibility**: `Public`
+4. Click **Create Space**.
+
+#### Step B: Deploy with the Automated Script
+From your local terminal, run the included deployment helper:
+```powershell
+python backend/deploy_hf.py --space-repo YOUR_USERNAME/deeptrace-backend --token YOUR_HF_TOKEN
+```
+*(Get a Write token from [Hugging Face Access Tokens](https://huggingface.co/settings/tokens)).*
+
+This script automatically:
+- Copies backend code, `Dockerfile`, and `requirements.txt`.
+- Bundles `deepfake_efficientnet.pth` and `deepfake_video_efficientnet_newdataset.pth`.
+- Configures Git LFS for binary `.pth` weights.
+- Pushes directly to your Hugging Face Space repository.
+
+#### Step C: Get Your Backend Direct API URL
+Once Hugging Face finishes building the Docker container, your API is available at:
+```
+https://YOUR_USERNAME-deeptrace-backend.hf.space
+```
+Test it in your browser:
+`https://YOUR_USERNAME-deeptrace-backend.hf.space/health`
+
+---
+
+### 2. Deploying the Frontend to Vercel
+
+1. Create or log in to your account on [Vercel](https://vercel.com).
+2. Click **Add New...** > **Project** and import this repository (`Deep-Trace`).
+3. Configure Project Settings:
+   - **Framework Preset**: `Vite`
+   - **Root Directory**: `frontend` *(or leave `./` as root `vercel.json` is provided)*
+   - **Build Command**: `npm run build`
+   - **Output Directory**: `dist`
+4. Add Environment Variable:
+   - **Key**: `VITE_API_URL`
+   - **Value**: Your Hugging Face Space Direct API URL (e.g., `https://YOUR_USERNAME-deeptrace-backend.hf.space`)
+5. Click **Deploy**. Vercel will build the frontend and serve it with global CDN and automated SSL.
+
+---
+
+### Alternative: Deploying Backend to Render
+
+If you prefer Render instead of Hugging Face Spaces:
 1. Create a new **Web Service** on [Render](https://render.com) connected to this repository.
-2. Configure the service settings:
-   - **Name**: `deeptrace-backend`
-   - **Region**: Nearest to your users
-   - **Branch**: `main`
+2. Settings:
    - **Root Directory**: `backend`
    - **Runtime**: Python 3
    - **Build Command**: `pip install -r requirements.txt`
    - **Start Command**: `uvicorn app:app --host 0.0.0.0 --port $PORT`
-3. If using pre-trained weights in production, download the `.pth` files via a Render build script, AWS S3 / Hugging Face, or mount a persistent disk containing `deepfake_efficientnet.pth` and `deepfake_video_efficientnet_newdataset.pth`.
-4. Copy the assigned Render service URL (e.g., `https://deeptrace-api.onrender.com`).
-
-### Deploying the Frontend to Vercel
-
-1. Create a new Project on [Vercel](https://vercel.com) and import this repository.
-2. Configure the project settings:
-   - **Framework Preset**: Vite
-   - **Root Directory**: `frontend`
-   - **Build Command**: `npm run build`
-   - **Output Directory**: `dist`
-   - **Install Command**: `npm install`
-3. Add Environment Variables:
-   - **Key**: `VITE_API_URL`
-   - **Value**: Your Render backend URL (e.g., `https://deeptrace-api.onrender.com`)
-4. Click **Deploy**. Vercel will build and serve the client application globally with automatic SSL.
+3. Provide `.pth` weights via Render disk or external storage.
 
 ---
 
