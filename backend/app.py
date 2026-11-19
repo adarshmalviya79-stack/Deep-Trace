@@ -8,6 +8,7 @@ import cv2
 import torch
 from torch import nn
 from fastapi import FastAPI, File, HTTPException, UploadFile
+from fastapi.middleware.cors import CORSMiddleware
 from PIL import Image, UnidentifiedImageError
 from torchvision import models, transforms
 
@@ -18,10 +19,30 @@ app = FastAPI(
     version="1.0.0"
 )
 
+# Enable CORS for frontend deployment (e.g. Vercel, localhost)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-IMAGE_CHECKPOINT = Path("models/deepfake_efficientnet.pth")
-VIDEO_CHECKPOINT = Path("models/deepfake_video_efficientnet_newdataset.pth")
+BASE_DIR = Path(__file__).resolve().parent
+IMAGE_CHECKPOINT = Path(
+    os.getenv(
+        "IMAGE_CHECKPOINT_PATH",
+        str(BASE_DIR / "models" / "deepfake_efficientnet.pth")
+    )
+)
+VIDEO_CHECKPOINT = Path(
+    os.getenv(
+        "VIDEO_CHECKPOINT_PATH",
+        str(BASE_DIR / "models" / "deepfake_video_efficientnet_newdataset.pth")
+    )
+)
 
 image_model = None
 video_model = None

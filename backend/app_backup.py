@@ -2,6 +2,7 @@ from pathlib import Path
 
 import torch
 from fastapi import FastAPI, File, HTTPException, UploadFile
+from fastapi.middleware.cors import CORSMiddleware
 from PIL import Image, UnidentifiedImageError
 from torchvision import models, transforms
 from torch import nn
@@ -16,7 +17,16 @@ app = FastAPI(
     version="0.1.0",
 )
 
-CHECKPOINT = Path("models/deepfake_efficientnet.pth")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+BASE_DIR = Path(__file__).resolve().parent
+CHECKPOINT = Path(os.getenv("IMAGE_CHECKPOINT_PATH", str(BASE_DIR / "models" / "deepfake_efficientnet.pth")))
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 model = None
 preprocess = transforms.Compose([

@@ -1,8 +1,15 @@
 
+import sys
+from pathlib import Path
 import cv2
 import torch
-from pathlib import Path
 from PIL import Image
+
+# Ensure backend root and evaluation folder are in import path
+BASE_DIR = Path(__file__).resolve().parent.parent
+for p in [str(BASE_DIR), str(BASE_DIR / "evaluation")]:
+    if p not in sys.path:
+        sys.path.insert(0, p)
 
 from evaluate_videos import load_model, preprocess, DEVICE
 

@@ -7,7 +7,7 @@
 [![PyTorch](https://img.shields.io/badge/PyTorch-EfficientNet--B0-EE4C2C.svg)](https://pytorch.org/)
 [![OpenCV](https://img.shields.io/badge/OpenCV-Haar%20Cascade-5C3EE8.svg)](https://opencv.org/)
 
-**DeepTrace** is an end-to-end, research-grade deepfake detection system engineered to identify synthetic visual artifacts and face-manipulations across both high-resolution still images and video sequences. The platform couples custom convolutional neural network checkpoints with computer vision face localization pipelines and serves results through an interactive, minimal React dashboard.
+**DeepTrace** is an end-to-end, research-grade deepfake detection platform engineered to identify synthetic visual artifacts and face manipulations across both high-resolution still images and video sequences. The platform couples custom convolutional neural network checkpoints with computer vision face localization pipelines and serves results through an interactive, minimal React dashboard.
 
 ---
 
@@ -17,18 +17,19 @@
 2. [Reported Model Performance & Evaluation](#reported-model-performance--evaluation)
 3. [Key Features](#key-features)
 4. [System Architecture](#system-architecture)
-5. [Detection Workflows](#detection-workflows)
+5. [Repository Structure](#repository-structure)
+6. [Detection Workflows](#detection-workflows)
    - [Image Detection Pipeline](#image-detection-pipeline)
    - [Video Detection Pipeline](#video-detection-pipeline)
-6. [Dataset Preparation & Training Overview](#dataset-preparation--training-overview)
 7. [Model Checkpoint Requirements](#model-checkpoint-requirements)
 8. [Backend Setup (FastAPI)](#backend-setup-fastapi)
 9. [Frontend Setup (React + TypeScript)](#frontend-setup-react--typescript)
 10. [Environment Configuration](#environment-configuration)
 11. [Running the Full Stack Locally](#running-the-full-stack-locally)
-12. [API Reference](#api-reference)
-13. [Limitations](#limitations)
-14. [Future Scope](#future-scope)
+12. [Deployment Guide (Vercel & Render)](#deployment-guide-vercel--render)
+13. [API Reference](#api-reference)
+14. [Limitations](#limitations)
+15. [Future Scope](#future-scope)
 
 ---
 
@@ -76,18 +77,90 @@ DeepTrace addresses this challenge through two dedicated **EfficientNet-B0** mod
            │
            │  (Multipart Form-Data: 'file')
            ▼
-[ Vite Dev Server / Reverse Proxy ] (Port 5173)
+[ Vite Dev Server / Reverse Proxy ] (Port 5173)  OR  [ Vercel CDN ]
            │
            ▼
-[ FastAPI Asynchronous Backend ] (Port 8000)
+[ FastAPI Asynchronous Backend ] (Port 8000 / Render Cloud)
     ├── GET  /health           ── Returns hardware device & checkpoint status
     ├── POST /predict          ── Image Inference Pipeline
     └── POST /predict-video    ── Video Frame Extraction & Inference Pipeline
            │
            ├─── PyTorch (CUDA / CPU)
-           ├─── EfficientNet-B0 Image Checkpoint
-           ├─── EfficientNet-B0 Video Checkpoint
+           ├─── EfficientNet-B0 Image Checkpoint (`backend/models/deepfake_efficientnet.pth`)
+           ├─── EfficientNet-B0 Video Checkpoint (`backend/models/deepfake_video_efficientnet_newdataset.pth`)
            └─── OpenCV Haar Cascade Frontal Face Classifier
+```
+
+---
+
+## 📂 Repository Structure
+
+```
+Deep-Trace/
+│
+├── backend/                                   # Python FastAPI Backend
+│   ├── app.py                                 # Main FastAPI application and API routes
+│   ├── app_backup.py                          # Single-model fallback API
+│   ├── requirements.txt                       # Backend dependencies (with opencv-python-headless)
+│   ├── README.md                              # Backend setup and script reference
+│   ├── .env.example                           # Backend environment template
+│   │
+│   ├── models/                                # Model checkpoints (weights excluded from Git)
+│   │   └── README.md                          # Checkpoint placement instructions
+│   │
+│   ├── training/                              # Training scripts
+│   │   ├── train.py                           # Image EfficientNet-B0 trainer
+│   │   ├── train_resnet.py                    # ResNet18 baseline trainer
+│   │   ├── train_video_newdataset.py          # Video face trainer
+│   │   └── finetune_video.py                  # Fine-tuning module
+│   │
+│   ├── evaluation/                            # Evaluation scripts
+│   │   ├── evaluate.py                        # Primary image evaluator
+│   │   ├── evaluate_external.py               # External benchmark evaluator
+│   │   ├── evaluate_videos.py                 # Video inference evaluator
+│   │   ├── evaluate_face_crops.py             # Face crop margin benchmark
+│   │   ├── evaluate_resnet.py                 # ResNet baseline benchmark
+│   │   └── threshold_analysis.py              # Threshold curve evaluation
+│   │
+│   ├── dataset_tools/                         # Data preparation & split tools
+│   │   ├── extract_new_video_faces.py         # Automated Haar Cascade face cropping
+│   │   ├── prepare_splits.py                  # Leakage-free subject partitioning
+│   │   ├── prepare_manifest.py                # Image dataset manifest builder
+│   │   ├── create_video_split.py              # Video dataset split builder
+│   │   ├── prepare_video_faces.py             # Video face extraction pipeline
+│   │   ├── prepare_video_manifest.py          # Video metadata manifest
+│   │   ├── verify_video_split.py              # Subject leakage verifier
+│   │   ├── check_leakage.py                   # Split collision checker
+│   │   ├── check_video_dataset.py             # Video archive validator
+│   │   └── audit_face_dataset.py              # Face dimensions and corruptions auditor
+│   │
+│   └── analysis/                              # Inspection and diagnostic scripts
+│       ├── analyze_source_groups.py           # Source distribution inspector
+│       ├── analyze_video_ids.py               # Subject ID collision inspector
+│       ├── diagnose_video.py                  # Video stream decoder
+│       ├── diagnose_face_crop.py              # Bounding box coordinates inspector
+│       ├── inspect_filenames.py               # Filename parser
+│       ├── inspect_new_dataset.py             # Partition statistics inspector
+│       └── inspect_video_metadata.py          # Resolution and bitrate inspector
+│
+├── frontend/                                  # React + TypeScript + Vite Dashboard
+│   ├── src/
+│   │   ├── components/                        # Modular UI components
+│   │   ├── pages/                             # Home, Detector, About views
+│   │   ├── services/                          # Axios API service
+│   │   ├── types/                             # TypeScript response schemas
+│   │   ├── App.tsx
+│   │   └── main.tsx
+│   ├── public/                                # Public assets (favicon)
+│   ├── package.json
+│   ├── package-lock.json
+│   ├── vite.config.ts                         # Reverse-proxy configuration
+│   └── tailwind.config.js
+│
+├── .gitignore                                 # Git exclusions (.venv, node_modules, .pth, data)
+├── .env.example                               # Root environment template
+├── package.json                               # Root workspace convenience scripts
+└── README.md                                  # Root documentation (this file)
 ```
 
 ---
@@ -101,7 +174,7 @@ Image Upload (JPG, PNG, WEBP, BMP ≤ 10MB)
         └──> Tensor Preprocessing (Resize to 224x224, ImageNet Normalization)
               └──> EfficientNet-B0 Feedforward
                     └──> Softmax Probability Computation
-                          └──> JSON Result: Verdict (Real/Fake) + Scores
+                          └──> JSON Result: Verdict (Real/Fake) + Raw Scores
 ```
 
 ### Video Detection Pipeline
@@ -118,47 +191,23 @@ Video Upload (MP4, AVI, MOV, MKV ≤ 100MB)
 
 ---
 
-## 📁 Dataset Preparation & Training Overview
-
-### 1. Image Training Layout
-Prepare datasets under `data/`:
-```text
-data/
-  train/
-    real/    # Authentic facial photographs
-    fake/    # Synthesized / Deepfake images
-  val/
-    real/
-    fake/
-  test/
-    real/
-    fake/
-```
-
-### 2. Video Dataset Layout
-Videos are organized into `data/video_test/` and processed using the provided dataset utility scripts:
-- `prepare_splits.py`: Establishes video ID splits to prevent subject leakage between train/val sets.
-- `extract_new_video_faces.py`: Runs automated face extraction across video archives.
-- `audit_face_dataset.py`: Audits image balance, corruption, and aspect ratios.
-
----
-
 ## 💾 Model Checkpoint Requirements
 
-Due to GitHub binary storage limitations, model weights are **excluded** from Git tracking. You must train or place pre-trained weights in the `models/` folder:
+Due to GitHub binary storage limitations, model weights (`.pth`) are **excluded** from Git tracking. You must train or place pre-trained weights in the `backend/models/` folder:
 
 | Filepath | Description |
 | :--- | :--- |
-| `models/deepfake_efficientnet.pth` | Checkpoint for Image inference |
-| `models/deepfake_video_efficientnet_newdataset.pth` | Checkpoint for Video inference |
+| `backend/models/deepfake_efficientnet.pth` | Checkpoint for Image inference |
+| `backend/models/deepfake_video_efficientnet_newdataset.pth` | Checkpoint for Video inference |
 
 To train the models from scratch:
 ```powershell
+cd backend
 # Train image model
-python train.py --data-dir data --epochs 10 --batch-size 32
+python training/train.py --manifest data/split_manifest.csv --epochs 10 --batch-size 32
 
 # Train video face model
-python train_video_newdataset.py --epochs 10 --batch-size 32
+python training/train_video_newdataset.py --epochs 10 --batch-size 32
 ```
 
 ---
@@ -167,22 +216,23 @@ python train_video_newdataset.py --epochs 10 --batch-size 32
 
 ### Prerequisites
 - Python 3.10 or 3.11
-- NVIDIA GPU with CUDA drivers (optional, recommended for fast video inference)
+- Virtual environment (`venv`)
 
-### Installation
+### Installation & Execution
 ```powershell
-# 1. Create and activate a Python virtual environment
+# 1. Navigate to backend directory
+cd backend
+
+# 2. Create and activate a Python virtual environment
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1   # On Windows
 # source .venv/bin/activate    # On Linux/macOS
 
-# 2. Upgrade pip and install dependencies
+# 3. Upgrade pip and install dependencies
 pip install --upgrade pip
 pip install -r requirements.txt
-```
 
-### Running Backend Server
-```powershell
+# 4. Start the FastAPI server
 uvicorn app:app --reload --host 127.0.0.1 --port 8000
 ```
 FastAPI documentation will be accessible at:
@@ -197,14 +247,10 @@ FastAPI documentation will be accessible at:
 - Node.js v18+ (tested on Node v20/v24)
 - npm or pnpm
 
-### Installation
+### Installation & Execution
 ```powershell
 cd frontend
 npm install
-```
-
-### Running Frontend Development Server
-```powershell
 npm run dev
 ```
 Access the client dashboard at `http://localhost:5173`.
@@ -221,11 +267,15 @@ Safe configuration templates are provided. Do **not** commit local `.env` files.
 VITE_API_URL=http://127.0.0.1:8000
 ```
 
-### Backend (`.env.example`)
+### Backend (`backend/.env.example`)
 ```env
 PORT=8000
 HOST=127.0.0.1
 DEVICE=auto
+
+# Optional override for model checkpoint locations (defaults to relative backend/models/)
+# IMAGE_CHECKPOINT_PATH=models/deepfake_efficientnet.pth
+# VIDEO_CHECKPOINT_PATH=models/deepfake_video_efficientnet_newdataset.pth
 ```
 
 ---
@@ -234,17 +284,52 @@ DEVICE=auto
 
 1. **Terminal 1 (Backend)**:
    ```powershell
+   cd backend
    .\.venv\Scripts\Activate.ps1
    uvicorn app:app --reload --port 8000
    ```
 
 2. **Terminal 2 (Frontend)**:
    ```powershell
+   cd frontend
    npm run dev
-   # Or: cd frontend && npm run dev
    ```
 
 3. Open **`http://localhost:5173`** in your browser.
+
+*(Alternatively, from repository root, run `npm run dev` to launch the frontend).*
+
+---
+
+## ☁️ Deployment Guide (Vercel & Render)
+
+### Deploying the Backend to Render
+
+1. Create a new **Web Service** on [Render](https://render.com) connected to this repository.
+2. Configure the service settings:
+   - **Name**: `deeptrace-backend`
+   - **Region**: Nearest to your users
+   - **Branch**: `main`
+   - **Root Directory**: `backend`
+   - **Runtime**: Python 3
+   - **Build Command**: `pip install -r requirements.txt`
+   - **Start Command**: `uvicorn app:app --host 0.0.0.0 --port $PORT`
+3. If using pre-trained weights in production, download the `.pth` files via a Render build script, AWS S3 / Hugging Face, or mount a persistent disk containing `deepfake_efficientnet.pth` and `deepfake_video_efficientnet_newdataset.pth`.
+4. Copy the assigned Render service URL (e.g., `https://deeptrace-api.onrender.com`).
+
+### Deploying the Frontend to Vercel
+
+1. Create a new Project on [Vercel](https://vercel.com) and import this repository.
+2. Configure the project settings:
+   - **Framework Preset**: Vite
+   - **Root Directory**: `frontend`
+   - **Build Command**: `npm run build`
+   - **Output Directory**: `dist`
+   - **Install Command**: `npm install`
+3. Add Environment Variables:
+   - **Key**: `VITE_API_URL`
+   - **Value**: Your Render backend URL (e.g., `https://deeptrace-api.onrender.com`)
+4. Click **Deploy**. Vercel will build and serve the client application globally with automatic SSL.
 
 ---
 

@@ -14,4 +14,4 @@ This directory is where trained PyTorch model checkpoints (`.pth`) must be place
    - Architecture: EfficientNet-B0 (custom 2-class linear classifier)
    - Evaluated on: Sampled facial frames extracted with OpenCV Haar Cascade
 
-> **Note**: Due to GitHub file size limits and best practices for binary assets, `.pth` files are excluded from Git version control. You must train the models using `train.py` and `train_video_newdataset.py` or download pre-trained weights into this directory prior to starting the FastAPI server.
+> **Note**: Due to GitHub file size limits and best practices for binary assets, `.pth` files are excluded from Git version control. You must train the models using `training/train.py` and `training/train_video_newdataset.py` (executed from the `backend/` directory) or download pre-trained weights into this directory prior to starting the FastAPI server.

@@ -1,7 +1,14 @@
 
+import sys
 import random
 import json
 from pathlib import Path
+
+# Ensure evaluation directory and backend root are in import path
+BASE_DIR = Path(__file__).resolve().parent.parent
+for p in [str(Path(__file__).resolve().parent), str(BASE_DIR)]:
+    if p not in sys.path:
+        sys.path.insert(0, p)
 
 import cv2
 import torch

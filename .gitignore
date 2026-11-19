@@ -3,6 +3,9 @@
 venv/
 env/
 ENV/
+backend/.venv/
+backend/venv/
+backend/env/
 env.bak/
 venv.bak/
 
@@ -18,7 +21,11 @@ frontend/*.tsbuildinfo
 
 # Datasets and Media Cache
 data/
+backend/data/
+results/
+backend/results/
 results/diagnostic_frames/
+backend/results/diagnostic_frames/
 *.mp4
 *.avi
 *.mov
@@ -33,6 +40,7 @@ results/diagnostic_frames/
 
 # Model Checkpoints (Large binary files)
 models/*.pth
+backend/models/*.pth
 *.pth
 *.pt
 *.onnx
@@ -42,6 +50,9 @@ models/*.pth
 .env
 .env.*
 !.env.example
+backend/.env
+backend/.env.*
+!backend/.env.example
 frontend/.env
 frontend/.env.*
 !frontend/.env.example
@@ -49,6 +60,8 @@ frontend/.env.*
 # Python Bytecode and Cache
 __pycache__/
 */__pycache__/
+**/__pycache__/
+backend/**/__pycache__/
 *.py[cod]
 *$py.class
 .pytest_cache/

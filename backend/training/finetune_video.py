@@ -1,9 +1,21 @@
 
+import sys
+from pathlib import Path
 import torch
 from torch import nn
 from torch.utils.data import DataLoader
 from torchvision import models, transforms
-from finetune_video import FaceDataset, evaluate
+
+# Ensure training directory and backend root are in import path
+BASE_DIR = Path(__file__).resolve().parent.parent
+for p in [str(Path(__file__).resolve().parent), str(BASE_DIR)]:
+    if p not in sys.path:
+        sys.path.insert(0, p)
+
+try:
+    from train import FaceDataset, evaluate
+except ImportError:
+    from training.train import FaceDataset, evaluate
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
